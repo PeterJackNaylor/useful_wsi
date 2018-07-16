@@ -1,3 +1,4 @@
+*.svs
 # Mac os
 *.DS_store
 ###Python###
