@@ -9,6 +9,7 @@ import openslide
 from useful_wsi import patch_sampling, visualise_cut
 from useful_wsi import roi_binary_mask, white_percentage
 
+
 def check_for_white(img):
     """
     Checking for white
@@ -17,18 +18,16 @@ def check_for_white(img):
     """
     return white_percentage(img, 220, 0.8)
 
+
 def main():
-    OPTIONS_APPLYING_MASK = {'mask_level': 2, 'function': roi_binary_mask}
-    OPTIONS_SAMPLING = {'method': "random_patches", 'analyse_level': 0, 'patch_size': (512, 512),
+    options_applying_mask = {'mask_level': 2, 'mask_function': roi_binary_mask}
+    options_sampling = {'sampling_method': "random_patches", 'analyse_level': 0, 'patch_size': (512, 512),
                         'overlapping': 0, 'list_func': [white_percentage], 'mask_tolerance': 0.3,
                         'allow_overlapping': False, 'n_samples': 100, 'with_replacement': False}
-
-
+    roi_options = dict(options_applying_mask, **options_sampling)
     file_name = "TCGA-CN-4739-01A-02-BS2.fc87f5db-d311-4734-a200-7c7d4885b274.svs"
 
-    list_roi = patch_sampling(file_name, 
-                              o_mask=OPTIONS_APPLYING_MASK, 
-                              o_sampling=OPTIONS_SAMPLING)
+    list_roi = patch_sampling(file_name, **roi_options)
 
     print('We have so many patches {}.'.format(len(list_roi)))
 

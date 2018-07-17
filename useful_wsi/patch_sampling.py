@@ -12,6 +12,7 @@ from .tissue_segmentation import roi_binary_mask
 from .utils import find_square, get_size, get_whole_image
 from .utils import get_x_y, get_x_y_from_0, open_image
 
+
 def pj_slice(array_np, point_0, point_1=None):
     """
     Allows to slice numpy array's given two points.
@@ -23,6 +24,7 @@ def pj_slice(array_np, point_0, point_1=None):
         x_1, y_1 = point_1
         result = array_np[x_0:x_1, y_0:y_1]
     return result
+
 
 def sample_patch_from_wsi(slide, slide_png, mask=None, mask_resolution=None, 
                           size_square=(512, 512), analyse_level=0,
@@ -50,6 +52,7 @@ def sample_patch_from_wsi(slide, slide_png, mask=None, mask_resolution=None,
         para = None
     return para
 
+
 def remove_sample_from_mask(slide, para, mask, mask_resolution):
     """
     Given a square patch and a mask, removes the patch from mask.
@@ -69,7 +72,8 @@ def remove_sample_from_mask(slide, para, mask, mask_resolution):
 
     return mask
 
-def random_wsi_sampling(n_samples, slide, mask=None, 
+
+def random_wsi_sampling(n_samples, slide, mask=None,
                         mask_resolution=None, size_square=(512, 512),
                         analyse_level=0, with_replacement=False,
                         list_func=[]):
@@ -86,7 +90,7 @@ def random_wsi_sampling(n_samples, slide, mask=None,
     initial_mask = mask.copy()
 
     for _ in range(n_samples):
-        para = sample_patch_from_wsi(slide, slide_png, mask, mask_resolution, size_square, 
+        para = sample_patch_from_wsi(slide, slide_png, mask, mask_resolution, size_square,
                                      analyse_level, list_func)
         mask = remove_sample_from_mask(slide, para, mask, mask_resolution)
         if with_replacement:
@@ -97,7 +101,8 @@ def random_wsi_sampling(n_samples, slide, mask=None,
             break
     return list_para
 
-def grid_blob(slide, point_start, point_end, patch_size, 
+
+def grid_blob(slide, point_start, point_end, patch_size,
               analyse_level, margin=0):
     """
     Returns grid for blob
@@ -110,6 +115,7 @@ def grid_blob(slide, point_start, point_end, patch_size,
     list_x = range(point_start[0], point_end[0], size_x - 2*margin)
     list_y = range(point_start[1], point_end[1], size_y - 2*margin)
     return list(itertools.product(list_x, list_y))
+
 
 def correct_patch(coord, slide, analyse_level, patch_size):
     """
@@ -124,6 +130,7 @@ def correct_patch(coord, slide, analyse_level, patch_size):
     coord = np.array([coord, max_dimensions - 1 - patch_size_0]).min(axis=0)
     return coord
 
+
 def mask_percentage(mask, point, radius, tolerance):
     """
     Given a binary image and a point and a radius -> sub_img
@@ -136,7 +143,8 @@ def mask_percentage(mask, point, radius, tolerance):
     accepted = score > tolerance
     return accepted
 
-def check_patch(slide, slide_png, mask, coord_grid_0, 
+
+def check_patch(slide, slide_png, mask, coord_grid_0,
                 mask_level, patch_size, analyse_level,
                 list_func, tolerance=0.5,
                 allow_overlapping=False):
@@ -171,58 +179,48 @@ def check_patch(slide, slide_png, mask, coord_grid_0,
     return parameters
 
 
-OPTIONS_APPLYING_MASK = {'mask_level': None, 'function': roi_binary_mask}
-OPTIONS_SAMPLING = {'method': None, 'analyse_level': 0, 'patch_size': (512, 512),
-                    'overlapping': 0, 'list_func': [], 'mask_tolerance': 0.5,
-                    'allow_overlapping': False, 'n_samples': 10, 'with_replacement': False}
-
-def patch_sampling(slide, seed=None,
-                   o_mask=OPTIONS_APPLYING_MASK, 
-                   o_sampling=OPTIONS_SAMPLING):
+def patch_sampling(slide, seed=None, mask_level=None,
+                   mask_function=roi_binary_mask, sampling_method=None,
+                   analyse_level=0, patch_size=None, overlapping=0,
+                   list_func=None, mask_tolerance=0.5, allow_overlapping=False,
+                   n_samples=10, with_replacement=False):
     """
-    Returns a list of patches from slide given a mask generating method 
+    Returns a list of patches from slide given a mask generating method
     and a sampling method
     """
     np.random.seed(seed)
     slide = open_image(slide)
 
-
-    sampling_method = o_sampling['method']
-
-    if o_mask['mask_level'] is not None:
-        mask_level = o_mask['mask_level']
-    else: 
+    if patch_size is None:
+        patch_size = (512, 512)
+    if list_func is None:
+        list_func = list()
+    if mask_level is None:
         mask_level = slide.level_count - 1
 
-
-    return_list = []
-    
     wsi_tissue = get_whole_image(slide, level=mask_level, numpy=True)
-    wsi_mask = o_mask['function'](wsi_tissue)
+    wsi_mask = mask_function(wsi_tissue)
 
-    if sampling_method == 'grid': # grid is just grid_etienne with marge = 0
-        blobs = measure.label(wsi_mask)
-        list_regions = measure.regionprops(blobs)
-        for blob in list_regions:
-            min_row, min_col, max_row, max_col = blob.bbox
-            point_start_l = min_row, min_col
-            point_end_l = max_row, max_col
-            point_start_0 = get_x_y(slide, point_start_l, mask_level)
-            point_end_0 = get_x_y(slide, point_end_l, mask_level)
-            margin_mask_level = get_size(slide, (o_sampling['overlapping'], 0), 
-                                         o_sampling['analyse_level'], mask_level)[0]
-            grid_coord = grid_blob(slide, point_start_0, point_end_0, o_sampling['patch_size'], 
-                                   o_sampling['analyse_level'], margin=margin_mask_level)
-            parameter = check_patch(slide, wsi_tissue, wsi_mask, grid_coord, mask_level,
-                                    o_sampling['patch_size'], o_sampling['analyse_level'],
-                                    o_sampling['list_func'], tolerance=o_sampling['mask_tolerance'],
-                                    allow_overlapping=o_sampling['allow_overlapping'])
-            return_list = return_list + parameter  
+    if sampling_method == 'grid':  # grid is just grid_etienne with marge = 0
+        min_row, min_col, max_row, max_col = 0, 0, *wsi_mask.shape
+        point_start_l = min_row, min_col
+        point_end_l = max_row, max_col
+        point_start_0 = get_x_y(slide, point_start_l, mask_level)
+        point_end_0 = get_x_y(slide, point_end_l, mask_level)
+        margin_mask_level = get_size(slide, (overlapping, 0),
+                                     analyse_level, mask_level)[0]
+        grid_coord = grid_blob(slide, point_start_0, point_end_0, patch_size,
+                               analyse_level, margin=margin_mask_level)
+        parameter = check_patch(slide, wsi_tissue, wsi_mask, grid_coord,
+                                mask_level, patch_size, analyse_level,
+                                list_func, tolerance=mask_tolerance,
+                                allow_overlapping=allow_overlapping)
+        return_list = parameter
     elif sampling_method == "random_patches":
-        return_list = random_wsi_sampling(o_sampling['n_samples'], slide, wsi_mask, mask_level, 
-                                          o_sampling['patch_size'], o_sampling['analyse_level'], 
-                                          with_replacement=o_sampling['with_replacement'],
-                                          list_func=o_sampling['list_func'])
+        return_list = random_wsi_sampling(n_samples, slide, wsi_mask,
+                                          mask_level, patch_size, analyse_level,
+                                          with_replacement=with_replacement,
+                                          list_func=list_func)
     elif sampling_method == "random_patches_with_border":
         raise NameError('sampling method random_patches_with_border is not yet implemented...')
     else:
