@@ -88,8 +88,8 @@ def get_size(slide, size_from, level_from, level_to):
     size_x, size_y = size_from
     downsamples = slide.level_downsamples
     scal = float(downsamples[level_from]) / downsamples[level_to]
-    size_x_new = int(float(size_x) * scal)
-    size_y_new = int(float(size_y) * scal)
+    size_x_new = round(float(size_x) * scal)
+    size_y_new = round(float(size_y) * scal)
     size_to = size_x_new, size_y_new
     return size_to
 

@@ -151,11 +151,11 @@ def check_patch(slide, slide_png, mask, coord_grid_0,
     shape_mask = np.array(mask.shape[0:2])
     parameters = []
     patch_size_l = get_size(slide, patch_size, analyse_level, mask_level)
+    radius = np.array([max(el // 2, 1) for el in patch_size_l])
     for coord_0 in coord_grid_0:
         coord_l = get_x_y_from_0(slide, coord_0, mask_level)
         # coord_0 = np.array(coord_0)[::-1]
         # coord_l = np.array(coord_l)[::-1]
-        radius = np.array([el // 2 for el in patch_size_l])
         point_cent_l = [coord_l + radius, shape_mask - 1 - radius]
         point_cent_l = np.array(point_cent_l).min(axis=0)
         if mask_percentage(mask, point_cent_l, radius, tolerance): ## only checking center point

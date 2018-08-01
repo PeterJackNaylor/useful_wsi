@@ -1,0 +1,12 @@
+You can:
+
+You have to download the mean file: https://cloud.mines-paristech.fr/index.php/s/ITw4RWZ97bF9VRK
+
+You have to download the model parameters: https://cloud.mines-paristech.fr/index.php/s/w8b8MJdOAJJjWzg and unzip in this folder.
+
+Or:
+bash download.sh
+
+
+
+You need to have segmentation_net installed https://github.com/PeterJackNaylor/segmentation_net
