@@ -80,7 +80,7 @@ def get_x_y_from_0(slide, point_0, level):
     point_l = (int(x_l), int(y_l))
     return point_l
                       
-def get_size(slide, size_from, level_from, level_to):
+def get_size(slide, size_from, level_from, level_to, round_scale=True):
     """
     Given a size at a certain level, this function will return
     this same size but at a different level.
@@ -88,8 +88,12 @@ def get_size(slide, size_from, level_from, level_to):
     size_x, size_y = size_from
     downsamples = slide.level_downsamples
     scal = float(downsamples[level_from]) / downsamples[level_to]
-    size_x_new = round(float(size_x) * scal)
-    size_y_new = round(float(size_y) * scal)
+    if round_scale:
+        func_round = round
+    else:
+        func_round = lambda x: x
+    size_x_new = func_round(float(size_x) * scal)
+    size_y_new = func_round(float(size_y) * scal)
     size_to = size_x_new, size_y_new
     return size_to
 
