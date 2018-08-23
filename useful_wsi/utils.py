@@ -8,6 +8,16 @@ Created on Tue May 03 16:32:53 2016
 import numpy as np
 import openslide
 
+def load_pred_cnn():
+    import sys
+    import useful_wsi as module
+    from os.path import join
+    path = module.__path__[0]
+    path = join(path, "..", "example", "best_wsi_tissue_segmentation")
+    sys.path.append(path)
+    from tissue_prediction import pred_cnn
+    return pred_cnn
+
 def open_image(slide):
     """
     Open openslide image
@@ -63,7 +73,7 @@ def get_x_y(slide, point_l, level):
     point_0 = (int(x_0), int(y_0))
     return point_0
 
-def get_x_y_from_0(slide, point_0, level):
+def get_x_y_from_0(slide, point_0, level, integer=True):
     """
     Given a point (x0, y0) at level 0, this function will return 
     the coordinates associated to the level 'level' of this point (x_l, y_l).
@@ -76,11 +86,13 @@ def get_x_y_from_0(slide, point_0, level):
   
     x_l = x_0 * size_x_l / size_x_0
     y_l = y_0 * size_y_l / size_y_0
-  
-    point_l = (int(x_l), int(y_l))
+    if integer:
+        point_l = (round(x_l), round(y_l))
+    else:
+        point_l = (x_l, y_l)
     return point_l
                       
-def get_size(slide, size_from, level_from, level_to, round_scale=True):
+def get_size(slide, size_from, level_from, level_to, integer=True):
     """
     Given a size at a certain level, this function will return
     this same size but at a different level.
@@ -88,7 +100,7 @@ def get_size(slide, size_from, level_from, level_to, round_scale=True):
     size_x, size_y = size_from
     downsamples = slide.level_downsamples
     scal = float(downsamples[level_from]) / downsamples[level_to]
-    if round_scale:
+    if integer:
         func_round = round
     else:
         func_round = lambda x: x
