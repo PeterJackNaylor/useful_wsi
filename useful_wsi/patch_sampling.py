@@ -6,7 +6,6 @@ Code for sampling from WSI
 
 import itertools
 import numpy as np
-from skimage import measure
 
 from .tissue_segmentation import roi_binary_mask
 from .utils import find_square, get_size, get_whole_image
@@ -15,7 +14,17 @@ from .utils import get_x_y, get_x_y_from_0, open_image
 
 def pj_slice(array_np, point_0, point_1=None):
     """
-    Allows to slice numpy array's given two points.
+    Allows to slice numpy array's given one point or 
+    two points.
+    Args:
+        array_np : numpy array to slice
+        point_0 : a tuple, or tuple like object of size 2 
+                  with integers.
+        point_1 : None (default) or a tuple, or tuple like 
+                  object of size 2 with integers.
+    Returns:
+        If point_1 is None, returns array_np evaluated in point_0,
+        else returns a slice of array_np between point_0 and point_1.
     """
     x_0, y_0 = point_0
     if point_1 is None:
@@ -103,7 +112,7 @@ def random_wsi_sampling(n_samples, slide, mask=None,
 
 
 def grid_blob(slide, point_start, point_end, patch_size,
-              analyse_level, margin=0):
+              analyse_level):
     """
     Returns grid for blob
     """
@@ -112,8 +121,8 @@ def grid_blob(slide, point_start, point_end, patch_size,
     else:
         patch_size_0 = get_size(slide, patch_size, analyse_level, 0)
     size_x, size_y = patch_size_0
-    list_x = range(point_start[0], point_end[0], size_x - 2*margin)
-    list_y = range(point_start[1], point_end[1], size_y - 2*margin)
+    list_x = range(point_start[0], point_end[0], size_x)
+    list_y = range(point_start[1], point_end[1], size_y)
     return list(itertools.product(list_x, list_y))
 
 
@@ -147,7 +156,8 @@ def mask_percentage(mask, point, radius, tolerance):
 def check_patch(slide, slide_png, mask, coord_grid_0,
                 mask_level, patch_size, analyse_level,
                 list_func, tolerance=0.5,
-                allow_overlapping=False):
+                allow_overlapping=False,
+                margin=0):
     shape_mask = np.array(mask.shape[0:2])
     parameters = []
     patch_size_l = get_size(slide, patch_size, analyse_level, mask_level)
@@ -167,13 +177,13 @@ def check_patch(slide, slide_png, mask, coord_grid_0,
                 if ((coord_l + radius) != point_cent_l).any():
                     if allow_overlapping:
                         coord_0 = correct_patch(coord_0, slide, analyse_level, patch_size)
-                        sub_param = [coord_0[1], coord_0[0], \
-                                     patch_size[0], patch_size[1], \
+                        sub_param = [coord_0[1] - margin, coord_0[0] - margin, \
+                                     patch_size[0] + 2 * margin, patch_size[1] + 2 * margin, \
                                      analyse_level]
                         parameters.append(sub_param)
                 else:
-                    sub_param = [coord_0[1], coord_0[0], \
-                                 patch_size[0], patch_size[1], \
+                    sub_param = [coord_0[1] - margin, coord_0[0] - margin, \
+                                 patch_size[0] + 2 * margin, patch_size[1] + 2 * margin, \
                                  analyse_level]
                     parameters.append(sub_param)
     return parameters
@@ -210,11 +220,12 @@ def patch_sampling(slide, seed=None, mask_level=None,
         margin_mask_level = get_size(slide, (overlapping, 0),
                                      analyse_level, mask_level)[0]
         grid_coord = grid_blob(slide, point_start_0, point_end_0, patch_size,
-                               analyse_level, margin=margin_mask_level)
+                               analyse_level)
         parameter = check_patch(slide, wsi_tissue, wsi_mask, grid_coord,
                                 mask_level, patch_size, analyse_level,
                                 list_func, tolerance=mask_tolerance,
-                                allow_overlapping=allow_overlapping)
+                                allow_overlapping=allow_overlapping,
+                                margin=margin_mask_level)
         return_list = parameter
     elif sampling_method == "random_patches":
         return_list = random_wsi_sampling(n_samples, slide, wsi_mask,
