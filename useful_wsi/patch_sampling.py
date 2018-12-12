@@ -160,6 +160,8 @@ def check_patch(slide, slide_png, mask, coord_grid_0,
                 margin=0):
     shape_mask = np.array(mask.shape[0:2])
     parameters = []
+    margin_mask_level = get_size(slide, (overlapping, 0),
+                                 0, analyse_level)[0]
     patch_size_l = get_size(slide, patch_size, analyse_level, mask_level)
     radius = np.array([max(el // 2, 1) for el in patch_size_l])
     for coord_0 in coord_grid_0:
@@ -177,11 +179,6 @@ def check_patch(slide, slide_png, mask, coord_grid_0,
                 if ((coord_l + radius) != point_cent_l).any():
                     if allow_overlapping:
                         coord_0 = correct_patch(coord_0, slide, analyse_level, patch_size)
-                        sub_param = [coord_0[1] - margin, coord_0[0] - margin, \
-                                     patch_size[0] + 2 * margin, patch_size[1] + 2 * margin, \
-                                     analyse_level]
-                        parameters.append(sub_param)
-                else:
                     sub_param = [coord_0[1] - margin, coord_0[0] - margin, \
                                  patch_size[0] + 2 * margin, patch_size[1] + 2 * margin, \
                                  analyse_level]
@@ -217,8 +214,6 @@ def patch_sampling(slide, seed=None, mask_level=None,
         point_end_l = max_row, max_col
         point_start_0 = get_x_y(slide, point_start_l, mask_level)
         point_end_0 = get_x_y(slide, point_end_l, mask_level)
-        margin_mask_level = get_size(slide, (overlapping, 0),
-                                     analyse_level, mask_level)[0]
         grid_coord = grid_blob(slide, point_start_0, point_end_0, patch_size,
                                analyse_level)
         parameter = check_patch(slide, wsi_tissue, wsi_mask, grid_coord,
