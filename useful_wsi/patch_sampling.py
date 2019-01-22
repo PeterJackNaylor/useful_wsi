@@ -146,6 +146,11 @@ def mask_percentage(mask, point, radius, tolerance):
     Computes a score to know how much of the  sub_img is covered
     by tissue region. Given a tolerance threshold this will return
     a boolean.
+    tolerance is mask_tolerance
+    tolerance of 1 means that the entire image is in the mask area.
+    tolerance of 0.1 means that the imagehas to overlap at least at 10%
+              with the mask.
+
     """
     sub_mask = pj_slice(mask, point - radius, point + radius)
     score = sub_mask.sum() / (sub_mask.shape[0] * sub_mask.shape[1])
@@ -160,8 +165,6 @@ def check_patch(slide, slide_png, mask, coord_grid_0,
                 margin=0):
     shape_mask = np.array(mask.shape[0:2])
     parameters = []
-    margin_mask_level = get_size(slide, (overlapping, 0),
-                                 0, analyse_level)[0]
     patch_size_l = get_size(slide, patch_size, analyse_level, mask_level)
     radius = np.array([max(el // 2, 1) for el in patch_size_l])
     for coord_0 in coord_grid_0:
@@ -194,6 +197,24 @@ def patch_sampling(slide, seed=None, mask_level=None,
     """
     Returns a list of patches from slide given a mask generating method
     and a sampling method
+    Args:
+        slide : 
+        seed : 
+        mask_level : 
+        mask_function : 
+        sampling_method :
+        analyse_level :
+        patch_size : 
+        overlapping :
+        list_func :
+        mask_tolerance :
+        allow_overlapping :
+        n_samples :
+        with_replacement :
+
+    Returns:
+        List of parameters where each parameter is list of 5 elements
+        [x, y, size_x_level, size_y_level, level]
     """
     np.random.seed(seed)
     slide = open_image(slide)
@@ -216,6 +237,9 @@ def patch_sampling(slide, seed=None, mask_level=None,
         point_end_0 = get_x_y(slide, point_end_l, mask_level)
         grid_coord = grid_blob(slide, point_start_0, point_end_0, patch_size,
                                analyse_level)
+
+        margin_mask_level = get_size(slide, (overlapping, 0),
+                                     0, analyse_level)[0]
         parameter = check_patch(slide, wsi_tissue, wsi_mask, grid_coord,
                                 mask_level, patch_size, analyse_level,
                                 list_func, tolerance=mask_tolerance,

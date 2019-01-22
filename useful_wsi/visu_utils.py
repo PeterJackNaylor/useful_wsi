@@ -14,7 +14,13 @@ PLOT_ARGS = {'color': 'red', 'size': (12, 12), 'title': ""}
 
 def visualise_cut(slide, list_pos, res_to_view=None, plot_args=PLOT_ARGS):
     """
-    Visulazise the patches you are going to extract from the image.
+    Plots the patches you are going to extract from the slide.
+    Args:
+        slide : str or openslide object.
+        list_pos : list of parameters to extract tiles from slide.
+        res_to_view : integer (default: None) resolution at which to
+                      view the patch extraction.
+        plot_args : dictionnary for any plotting argument.
     """
     slide = open_image(slide)
     if res_to_view is None:
