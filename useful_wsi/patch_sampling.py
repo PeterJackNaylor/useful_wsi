@@ -148,7 +148,7 @@ def mask_percentage(mask, point, radius, tolerance):
     a boolean.
     tolerance is mask_tolerance
     tolerance of 1 means that the entire image is in the mask area.
-    tolerance of 0.1 means that the imagehas to overlap at least at 10%
+    tolerance of 0.1 means that the image has to overlap at least at 10%
               with the mask.
 
     """
@@ -182,10 +182,10 @@ def check_patch(slide, slide_png, mask, coord_grid_0,
                 if ((coord_l + radius) != point_cent_l).any():
                     if allow_overlapping:
                         coord_0 = correct_patch(coord_0, slide, analyse_level, patch_size)
-                    sub_param = [coord_0[1] - margin, coord_0[0] - margin, \
-                                 patch_size[0] + 2 * margin, patch_size[1] + 2 * margin, \
-                                 analyse_level]
-                    parameters.append(sub_param)
+                sub_param = [coord_0[1] - margin, coord_0[0] - margin, \
+                             patch_size[0] + 2 * margin, patch_size[1] + 2 * margin, \
+                             analyse_level]
+                parameters.append(sub_param)
     return parameters
 
 
