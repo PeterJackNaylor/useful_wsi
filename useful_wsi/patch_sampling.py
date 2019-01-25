@@ -179,13 +179,19 @@ def check_patch(slide, slide_png, mask, coord_grid_0,
             for function in list_func:
                 criterias.append(function(sub_img))
             if all(criterias):
+                still_add = True
                 if ((coord_l + radius) != point_cent_l).any():
+                    # If the patch is going of the border
+                    #
+                    still_add = False
                     if allow_overlapping:
                         coord_0 = correct_patch(coord_0, slide, analyse_level, patch_size)
-                sub_param = [coord_0[1] - margin, coord_0[0] - margin, \
-                             patch_size[0] + 2 * margin, patch_size[1] + 2 * margin, \
-                             analyse_level]
-                parameters.append(sub_param)
+                        still_add = True
+                if still_add:
+                    sub_param = [coord_0[1] - margin, coord_0[0] - margin, \
+                                 patch_size[0] + 2 * margin, patch_size[1] + 2 * margin, \
+                                 analyse_level]
+                    parameters.append(sub_param)
     return parameters
 
 
