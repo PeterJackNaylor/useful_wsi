@@ -11,7 +11,7 @@ useful_wsi can be installed by unzipping the source code in one directory and us
 
 You can also install it directly from the Python Package Index with this command: ::
 
-    pip useful_wsi install
+    pip install useful_wsi
 
 
 Licence
