@@ -1,4 +1,4 @@
-"""A pypi demonstration vehicle.
+"""
 
 .. moduleauthor:: Naylor Peter <peter.naylor@mines-paristech.fr>
 

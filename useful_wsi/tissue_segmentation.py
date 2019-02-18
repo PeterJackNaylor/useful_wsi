@@ -3,6 +3,8 @@
 Created on Tue May 03 16:32:53 2016
 
 @author: Peter
+A collection of functions that can be used to generate a mask for a given tissue.
+These functions were fine tuned on a personnal data. They can be used at your own risk.
 """
 import numpy as np
 
@@ -14,7 +16,7 @@ from scipy.ndimage.morphology import binary_fill_holes
 
 
 def opening_(image, disk_size=7):
-    # computes several openings with a bigger disk at each time..
+    # Computes an opening of size disk.
     inter_image = image.copy()
     inter_image = opening(inter_image, disk(disk_size))
     return inter_image
