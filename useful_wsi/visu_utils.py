@@ -24,11 +24,11 @@ def visualise_cut(slide, list_pos, res_to_view=None, plot_args=PLOT_ARGS):
         plot_args : dictionnary for any plotting argument.
     """
     slide = open_image(slide)
-    if level is None:
-        level = slide.level_count - 1
-    elif level > slide.level_count - 1:
+    if res_to_view is None:
+        res_to_view = slide.level_count - 1
+    elif res_to_view > slide.level_count - 1:
         print(" level ask is too low... It was setted accordingly")
-        level = slide.level_count - 1
+        res_to_view = slide.level_count - 1
     whole_slide = get_whole_image(slide, res_to_view, numpy=True)
     fig = plt.figure(figsize=plot_args['size'])
     axes = fig.add_subplot(111, aspect='equal')

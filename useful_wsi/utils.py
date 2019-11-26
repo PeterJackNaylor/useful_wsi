@@ -7,6 +7,7 @@ Created on Tue May 03 16:32:53 2016
 
 import numpy as np
 import openslide
+import warnings
 
 def load_pred_cnn():
     import sys
@@ -196,7 +197,7 @@ def find_square(slide, point, level_from, level_to, nber_pixels):
 
     new_x = max(x_0 - size_level_to[0] / 2, 0)
     new_y = max(y_0 - size_level_to[1] / 2, 0)
-    return_list = [new_y, new_x, size_level_to[0], size_level_to[1], level_to]
+    return_list = [new_y, new_x, size_from[0], size_from[1], level_to]
     return_list = [int(el) for el in return_list]
     return return_list
 
@@ -213,12 +214,79 @@ def white_percentage(rgb, white_thresh=220, tolerance=0.8):
         tolerance : A float between 0 and 1. By default 0.5.
 
     Returns:
-        A boolean.
+        A boolean. If true, keep, if false, discard.
     """
-    score = (rgb.mean(axis=-1) > white_thresh).sum()
+    score = (rgb.mean(axis=-1) > white_thresh).sum() # amount of white pixels
     score = score / (rgb.shape[0] * rgb.shape[1])
     accepted = score < tolerance
     return accepted
+
+# def check_borders_correct(array_np, point_0, point_1):
+#     shape = array_np.shape
+#     if point_0[0] > point_1[0]:
+#         warnings.warn("Invalid x_axis slicing, \
+#             point_0: {} and point_1: {}".format(point_0, point_1))
+#     if point_0[1] > point_1[1]:
+#         warnings.warn("Invalid y_axis slicing, \
+#             point_0: {} and point_1: {}".format(point_0, point_1))
+#     if point_0[0] < 0 or point_0[1] < 0 or point_0[0] > shape[0] or point_0[1] > shape[1]:
+#         x0, y0 = point_0
+#         x0 = max(0, x0)
+#         y0 = max(0, y0)
+#         x0 = min(shape[0], x0)
+#         y0 = min(shape[1], y0)
+#         warnings.warn("Invalid point_0: {}, corrected to {}".format(point_0, (x0, y0)))
+#         point_0 = (x0, y0)
+#     if point_1[0] < 0 or point_1[1] < 0 or point_1[0] > shape[0] or point_1[1] > shape[1]:
+#         x1, y1 = point_1
+#         x1 = max(0, x1)
+#         y1 = max(0, y1)
+#         x1 = min(shape[0], x1)
+#         y1 = min(shape[1], y1)
+#         warnings.warn("Invalid point_1: {}, corrected to {}".format(point_1, (x1, y1)))
+#         point_1 = (x1, y1)
+#     return point_0, point_1
+
+def check_borders_correct(array_np, point):
+    shape = array_np.shape
+    if point[0] < 0 or point[1] < 0 or point[0] > shape[0] or point[1] > shape[1]:
+        x, y = point
+        x = max(0, x)
+        y = max(0, y)
+        x = min(shape[0], x)
+        y = min(shape[1], y)
+        warnings.warn("Invalid point: {}, corrected to {}".format(point, (x, y)))
+        point = (x, y)
+    return point
+
+
+def pj_slice(array_np, point_0, point_1=None):
+    """
+    Allows to slice numpy array's given one point or 
+    two points.
+    Args:
+        array_np : Numpy array to slice
+        point_0 : A tuple, or tuple like object of size 2 
+                  with integers.
+        point_1 : None (default) or a tuple, or tuple like 
+                  object of size 2 with integers.
+    Returns:
+        If point_1 is None, returns array_np evaluated in point_0,
+        else returns a slice of array_np between point_0 and point_1.
+    """
+    x_0, y_0 = check_borders_correct(array_np, point_0)
+    if point_1 is None:
+        result = array_np[x_0, y_0]
+    else:
+        x_1, y_1 = check_borders_correct(array_np, point_1)
+        if x_0 > x_1:
+            warnings.warn("Invalid x_axis slicing, \
+                point_0: {} and point_1: {}".format(point_0, point_1))
+        if y_0 > y_1:
+            warnings.warn("Invalid y_axis slicing, \
+                point_0: {} and point_1: {}".format(point_0, point_1))
+        result = array_np[x_0:x_1, y_0:y_1]
+    return result
 
 def mask_percentage(mask, point, radius, mask_tolerance=0.5):
     """
@@ -239,12 +307,9 @@ def mask_percentage(mask, point, radius, mask_tolerance=0.5):
                  object of size 2 with integers.
         tolerance : A float between 0 and 1. By default 0.5.
     Returns:
-        A boolean.
+        A boolean. If True, keep, else discard
     """
-    sub_mask = pj_slice(mask, point - radius, point + radius)
+    sub_mask = pj_slice(mask, point - radius, point + radius + 1)
     score = sub_mask.sum() / (sub_mask.shape[0] * sub_mask.shape[1])
-    accepted = score > tolerance
+    accepted = score > mask_tolerance
     return accepted
-
-
-

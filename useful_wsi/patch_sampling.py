@@ -8,31 +8,8 @@ import itertools
 import numpy as np
 
 from .tissue_segmentation import roi_binary_mask
-from .utils import (find_square, get_size, get_whole_image,
+from .utils import (find_square, get_size, get_whole_image, pj_slice,
                     get_x_y, get_x_y_from_0, mask_percentage, open_image)
-
-
-def pj_slice(array_np, point_0, point_1=None):
-    """
-    Allows to slice numpy array's given one point or 
-    two points.
-    Args:
-        array_np : Numpy array to slice
-        point_0 : A tuple, or tuple like object of size 2 
-                  with integers.
-        point_1 : None (default) or a tuple, or tuple like 
-                  object of size 2 with integers.
-    Returns:
-        If point_1 is None, returns array_np evaluated in point_0,
-        else returns a slice of array_np between point_0 and point_1.
-    """
-    x_0, y_0 = point_0
-    if point_1 is None:
-        result = array_np[x_0, y_0]
-    else:
-        x_1, y_1 = point_1
-        result = array_np[x_0:x_1, y_0:y_1]
-    return result
 
 
 def sample_patch_from_wsi(slide, mask=None, mask_level=None, 
@@ -98,12 +75,10 @@ def remove_sample_from_mask(slide, para, mask, mask_level):
         point_0 = (para[1], para[0])
         size_l = (para[2], para[3])
         analyse_level = para[4]
-        point_mask_res = get_x_y_from_0(slide, point_0, mask_level)
-        point_mask_res = np.array(point_mask_res)
-        size_mask_res = get_size(slide, size_l, analyse_level, mask_level)
-        size_mask_res = np.array(size_mask_res)
-        start_point = np.array([point_mask_res - size_mask_res, (0, 0)]).min(axis=0)
-        end_point = start_point + 2*size_mask_res
+        point_mask_res = np.array(get_x_y_from_0(slide, point_0, mask_level))
+        size_mask_res = np.array(get_size(slide, size_l, analyse_level, mask_level))
+        start_point = np.array([point_mask_res - size_mask_res // 2, (0, 0)]).max(axis=0)
+        end_point = start_point + size_mask_res
         mask[start_point[0]:end_point[0], start_point[1]:end_point[1]] = 0
 
     return mask
@@ -252,7 +227,7 @@ def check_patch(slide, mask, coord_grid_0, mask_level,
         # coord_l = np.array(coord_l)[::-1]
         point_cent_l = [coord_l + radius, shape_mask - 1 - radius]
         point_cent_l = np.array(point_cent_l).min(axis=0)
-        if mask_percentage(mask, point_cent_l, radius, tolerance): ## only checking center point
+        if mask_percentage(mask, point_cent_l, radius, mask_tolerance): ## only checking center point
             criterias = []
             sub_img = pj_slice(slide_png, point_cent_l - radius, point_cent_l + radius)
             for function in list_func:
@@ -344,7 +319,7 @@ def patch_sampling(slide, seed=None, mask_level=None,
 
         margin_mask_level = get_size(slide, (overlapping, 0),
                                      0, analyse_level)[0]
-        parameter = check_patch(slide, wsi_tissue, wsi_mask, grid_coord,
+        parameter = check_patch(slide, wsi_mask, grid_coord,
                                 mask_level, patch_size, analyse_level,
                                 list_func, mask_tolerance=mask_tolerance,
                                 allow_overlapping=allow_overlapping,
