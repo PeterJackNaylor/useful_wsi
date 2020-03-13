@@ -8,7 +8,7 @@ import itertools
 import numpy as np
 
 from .tissue_segmentation import roi_binary_mask
-from .utils import (find_square, get_size, get_whole_image, pj_slice,
+from .utils import (find_square, get_size, get_whole_image, pj_slice, true_level,
                     get_x_y, get_x_y_from_0, mask_percentage, open_image)
 
 
@@ -307,6 +307,7 @@ def patch_sampling(slide, seed=None, mask_level=None,
 
     wsi_tissue = get_whole_image(slide, level=mask_level, numpy=True)
     wsi_mask = mask_function(wsi_tissue)
+    mask_level = true_level(slide, level = mask_level)
 
     if sampling_method == 'grid':  # grid is just grid_etienne with marge = 0
         min_row, min_col, max_row, max_col = 0, 0, *wsi_mask.shape
