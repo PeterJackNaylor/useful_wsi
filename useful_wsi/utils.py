@@ -54,6 +54,28 @@ def get_image(slide, para, numpy=True):
         slide = np.array(slide)[:, :, 0:3]
     return slide
 
+def true_level(slide, level):
+    """" Finds the true level to which the mask has been done.
+    In the case where the image does not have enough levels, get_whole_images() takes 
+    the level ${slide.level_count - 1} as default level. This function is there to actualize the value of level
+    so that the following treatement of the WSI is coherent with level = slide.level_count - 1.
+    
+    Parameters
+    ----------
+    slide : openslide image
+        WSI
+    level : int
+        asked level.
+    
+    Returns
+    -------
+    int
+        true level
+    """
+    max_level = slide.level_count - 1
+    level = min(max_level, level)
+    return level
+
 def get_whole_image(slide, level=None, numpy=True):
     """
     Return whole image at a certain level.
